@@ -25,5 +25,5 @@ dist/
 
 # Директория с временным хранением данных
 example/
-temp/
+temp/*
 !temp/.gitkeep
