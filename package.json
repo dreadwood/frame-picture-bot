@@ -1,0 +1,29 @@
+{
+  "name": "madloba-bot",
+  "version": "1.0.0",
+  "author": "dreadwood",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "NODE_ENV=production node dist/",
+    "dev": "NODE_ENV=development nodemon",
+    "build": "tsc",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.0",
+    "husky": "8.0.1",
+    "lint-staged": "13.0.3",
+    "node-ts": "5.1.2",
+    "nodemon": "2.0.20",
+    "prettier": "2.7.1",
+    "ts-node": "10.9.1",
+    "typescript": "4.8.4"
+  },
+  "dependencies": {
+    "axios": "1.1.3",
+    "dotenv": "16.0.3",
+    "jimp": "0.16.2",
+    "nanoid": "3.3.4",
+    "telegraf": "4.10.0"
+  }
+}
