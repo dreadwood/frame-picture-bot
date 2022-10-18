@@ -1,8 +1,9 @@
 export enum ImagesType {
-  JPEG = 'image/jpeg'
+  JPEG = 'image/jpeg',
 }
 
 export enum Dir {
-  TEMP = 'temp'
+  TEMP = 'temp',
 }
 
+export const COLOR_FRAME = '#FFFFFF'

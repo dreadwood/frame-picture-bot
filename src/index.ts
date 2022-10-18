@@ -2,9 +2,9 @@ import * as fs from 'fs'
 import path from 'path'
 import * as dotenv from 'dotenv'
 import axios from 'axios'
-// import Jimp from 'jimp';
+import Jimp from 'jimp'
 import { Telegraf } from 'telegraf'
-import { Dir, ImagesType } from './const'
+import { Dir, ImagesType, COLOR_FRAME } from './const'
 import { nanoid } from 'nanoid'
 
 dotenv.config()
@@ -20,13 +20,11 @@ bot.start(ctx => ctx.reply("Welcome. I'm not a bot!"))
 bot.hears('hi', ctx => ctx.reply('Hey there'))
 bot.on('photo', ctx => ctx.reply('Please send me a photo as a document'))
 bot.on('document', async ctx => {
-  console.log(ctx.message.document)
-
   const {
     file_id: fileId,
     mime_type: mimeType,
     file_name: fileName,
-  } = ctx.update.message.document
+  } = ctx.message.document
 
   if (mimeType === ImagesType.JPEG) {
     const fileUrl = await ctx.telegram.getFileLink(fileId)
@@ -35,11 +33,21 @@ bot.on('document', async ctx => {
     // if ([fileId, mimeType, fileName].every(it => typeof it === 'string')) {}
 
     if (typeof fileName === 'string') {
-      /* FIXME */
-      const filePath = path.resolve(__dirname, '..', Dir.TEMP, nanoid(8))
-      fs.mkdirSync(filePath)
+      const [text, fileExt] = fileName.split('.')
 
-      downloadImage(fileUrl.href, `${filePath}/${fileName}`)
+      const dirPath = path.resolve(__dirname, `../${Dir.TEMP}/${nanoid(8)}`)
+      fs.mkdirSync(dirPath)
+
+      const imageSourcePath = `${dirPath}/source.${fileExt}`
+      const imageOutputPath = `${dirPath}/output.${fileExt}`
+
+      await downloadImage(fileUrl.href, imageSourcePath)
+      await editImage(imageSourcePath, imageOutputPath, text)
+
+      ctx.replyWithDocument({
+        source: imageOutputPath,
+        filename: fileName,
+      })
     }
 
     ctx.reply(`Your file name: ${fileName}`)
@@ -64,4 +72,45 @@ async function downloadImage(url: string, filePath: string) {
     writer.on('finish', resolve)
     writer.on('error', reject)
   })
+}
+
+async function editImage(
+  imagePathInput: string,
+  imagePathOutput: string,
+  text: string,
+) {
+  try {
+    const image = await Jimp.read(imagePathInput)
+
+    const indentImage = image.bitmap.width * 0.05
+    const widthCanvas = image.bitmap.width + indentImage * 2
+    const heightCanvas = image.bitmap.height + indentImage * 4
+
+    const indentLeftText = indentImage * 2
+    const indentTopText = image.bitmap.height + indentImage
+    const widthText = image.bitmap.width - indentImage * 2
+    const heightText = indentImage * 3
+
+    const canvas = new Jimp(widthCanvas, heightCanvas, COLOR_FRAME)
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
+
+    canvas.composite(image, indentImage, indentImage)
+    canvas.print(
+      font,
+      indentLeftText,
+      indentTopText,
+      {
+        text,
+        alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE,
+      },
+      widthText,
+      heightText,
+    )
+    await canvas.writeAsync(imagePathOutput)
+
+    console.info('Image generated successfully')
+  } catch (error) {
+    console.info('Error editing image', error)
+  }
 }
